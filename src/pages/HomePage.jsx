@@ -56,7 +56,7 @@ export default function HomePage() {
   const flashDeals = products.slice(10, 18);
 
   return (
-    <div className="bg-luxe-black overflow-hidden pt-44">
+    <div className="bg-luxe-black overflow-hidden pt-52">
       {/* Hero Section */}
       <section className="relative h-[90vh] mx-6 mt-6 rounded-[3rem] overflow-hidden group">
         <Swiper

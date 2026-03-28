@@ -22,15 +22,26 @@ import ProductCard from '../components/ui/ProductCard';
 
 export default function ProductDetailPage() {
   const { id } = useParams();
-  const product = products.find(p => p.id === id);
+  const product = products.find(p => p.id === id || p.id.toString() === id);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('highlights');
   const [pincode, setPincode] = useState('');
   const [deliveryStatus, setDeliveryStatus] = useState(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
 
-  const { addToCart, toggleWishlist, wishlist } = useStore();
-  const isWishlisted = wishlist.includes(id);
+  const { addToCart, toggleWishlist, wishlist, addToRecentlyViewed, recentlyViewed, currency } = useStore();
+  const isWishlisted = wishlist.includes(product.id);
+
+  const [selectedVariant, setSelectedVariant] = useState(null);
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    if (product) {
+      addToRecentlyViewed(product);
+    }
+  }, [product, addToRecentlyViewed]);
 
   if (!product) return <div>Product not found</div>;
 
@@ -72,12 +83,26 @@ export default function ProductDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
           {/* Left: Gallery */}
           <div className="lg:col-span-7 space-y-6">
-            <div className="relative aspect-square rounded-[3rem] overflow-hidden bg-white/5 border border-white/5 group">
+            <div 
+              className="relative aspect-square rounded-[3rem] overflow-hidden bg-white/5 border border-white/5 group cursor-zoom-in"
+              onMouseMove={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width) * 100;
+                const y = ((e.clientY - rect.top) / rect.height) * 100;
+                setMousePos({ x, y });
+              }}
+              onMouseEnter={() => setIsZoomed(true)}
+              onMouseLeave={() => setIsZoomed(false)}
+            >
               <motion.img 
                 key={selectedImage}
                 initial={{ opacity: 0, scale: 1.1 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6 }}
+                animate={{ 
+                  opacity: 1, 
+                  scale: isZoomed ? 2 : 1,
+                  transformOrigin: `${mousePos.x}% ${mousePos.y}%`
+                }}
+                transition={{ duration: isZoomed ? 0.2 : 0.6 }}
                 src={product.images[selectedImage]} 
                 alt={product.name} 
                 className="w-full h-full object-cover"
@@ -124,7 +149,21 @@ export default function ProductDetailPage() {
                 </div>
                 <span className="text-white/20 text-xs font-bold uppercase tracking-widest">{product.reviews.length} Verified Reviews</span>
                 <div className="h-4 w-px bg-white/10"></div>
-                <button className="text-white/40 hover:text-white flex items-center gap-2 transition-all">
+                <button 
+                  onClick={() => {
+                    if (navigator.share) {
+                      navigator.share({
+                        title: product.name,
+                        text: product.description,
+                        url: window.location.href,
+                      });
+                    } else {
+                      navigator.clipboard.writeText(window.location.href);
+                      toast.success('Link copied to clipboard!');
+                    }
+                  }}
+                  className="text-white/40 hover:text-white flex items-center gap-2 transition-all"
+                >
                   <Share2 size={16} />
                 </button>
               </div>
@@ -134,13 +173,52 @@ export default function ProductDetailPage() {
                  
                  <div className="relative z-10">
                    <div className="flex items-baseline gap-4 mb-2">
-                     <span className="text-5xl font-black font-outfit text-white tracking-tighter">₹{product.price.toLocaleString()}</span>
-                     <span className="text-white/20 text-lg line-through font-bold">₹{product.mrp.toLocaleString()}</span>
+                     <span className="text-5xl font-black font-outfit text-white tracking-tighter">
+                       {currency.symbol}{(product.price * currency.rate).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                     </span>
+                     <span className="text-white/20 text-lg line-through font-bold">
+                       {currency.symbol}{(product.mrp * currency.rate).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                     </span>
                      <span className="text-white text-[10px] font-black uppercase tracking-widest px-2 py-1 bg-white/5 border border-white/10 rounded-md">
                         {product.discount}% OFF
                      </span>
                    </div>
-                   <p className="text-green-400 text-xs font-bold mb-8 uppercase tracking-widest">Inclusive of all luxury duties</p>
+                   
+                   <div className="flex items-center gap-4 mb-8">
+                     <p className="text-green-400 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
+                       <Check size={14} /> In Stock
+                     </p>
+                     {product.stock < 50 && (
+                       <span className="text-red-400 text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 bg-red-400/10 rounded-full animate-pulse">
+                         Only {product.stock} left in stock!
+                       </span>
+                     )}
+                   </div>
+
+                   {/* Variants Selector */}
+                   <div className="mb-8">
+                     <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mb-4">
+                       {product.category === 'fashion' ? 'Select Size' : 'Select Storage'}
+                     </p>
+                     <div className="flex flex-wrap gap-3">
+                       {(product.category === 'fashion' 
+                         ? ['S', 'M', 'L', 'XL'] 
+                         : ['128GB', '256GB', '512GB', '1TB']
+                       ).map(variant => (
+                         <button
+                           key={variant}
+                           onClick={() => setSelectedVariant(variant)}
+                           className={`px-6 py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
+                             selectedVariant === variant 
+                             ? 'bg-white border-white text-black' 
+                             : 'glass-panel border-white/10 text-white/40 hover:border-white/30'
+                           }`}
+                         >
+                           {variant}
+                         </button>
+                       ))}
+                     </div>
+                   </div>
 
                    <div className="space-y-4">
                       <div className="flex items-center gap-4">
@@ -270,6 +348,18 @@ export default function ProductDetailPage() {
                 )}
                 {activeTab === 'reviews' && (
                   <div className="space-y-12">
+                    <div className="flex items-center justify-between mb-8">
+                       <div>
+                          <h3 className="text-2xl font-black font-outfit uppercase text-white mb-2">Connoisseur Feedback</h3>
+                          <p className="text-white/30 text-xs font-bold uppercase tracking-widest">Insights from the global elite</p>
+                       </div>
+                       <button 
+                         onClick={() => setShowReviewModal(true)}
+                         className="px-8 py-4 glass-panel border-white/10 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-black transition-all"
+                       >
+                         Write a Review
+                       </button>
+                    </div>
                     {product.reviews.map((r, i) => (
                       <div key={i} className="glass-card p-8 rounded-[2.5rem] border-white/5">
                         <div className="flex items-center justify-between mb-6">
@@ -298,6 +388,22 @@ export default function ProductDetailPage() {
           </div>
         </section>
 
+        {/* Recently Viewed */}
+        {recentlyViewed.length > 1 && (
+          <section className="mt-32">
+            <div className="flex items-center justify-between mb-12">
+              <h2 className="text-white text-3xl md:text-5xl font-black font-outfit uppercase tracking-tighter">Recently <span className="text-white/20">Viewed</span></h2>
+            </div>
+            <div className="flex gap-8 overflow-x-auto no-scrollbar pb-8">
+              {recentlyViewed.filter(p => p.id !== product.id).map(p => (
+                <div key={p.id} className="min-w-[280px]">
+                  <ProductCard product={p} />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Similar Collection */}
         <section className="mt-32">
           <div className="flex items-center justify-between mb-12">
@@ -313,6 +419,63 @@ export default function ProductDetailPage() {
           </div>
         </section>
       </div>
+
+      {/* Review Modal */}
+      <AnimatePresence>
+        {showReviewModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowReviewModal(false)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-xl glass-dark border border-white/10 rounded-[3rem] p-12 overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-32 -mt-32" />
+              
+              <div className="relative z-10">
+                <h2 className="text-4xl font-black font-outfit uppercase text-white tracking-tighter mb-2">Submit Review</h2>
+                <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-10">Share your experience with this masterpiece</p>
+                
+                <div className="space-y-6">
+                  <div>
+                    <p className="text-white text-[10px] font-black uppercase tracking-widest mb-3">Rating</p>
+                    <div className="flex gap-2">
+                      {[1, 2, 3, 4, 5].map(star => (
+                        <button key={star} className="p-1">
+                          <Star size={24} className="text-white/20 hover:text-white transition-all" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-white text-[10px] font-black uppercase tracking-widest mb-3">Your Perspective</p>
+                    <textarea 
+                      placeholder="What makes this piece unique?"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 text-white text-sm focus:outline-none focus:border-white/30 h-32"
+                    />
+                  </div>
+                  <button 
+                    onClick={() => {
+                      toast.success('Your review has been submitted for verification.');
+                      setShowReviewModal(false);
+                    }}
+                    className="w-full btn-premium py-5 text-xs font-black uppercase tracking-widest"
+                  >
+                    Authenticate Review
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

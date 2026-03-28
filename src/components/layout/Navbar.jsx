@@ -33,13 +33,29 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false);
+  const [hoveredCategory, setHoveredCategory] = useState(null);
 
-  const { cart, wishlist } = useStore();
+  const {
+    cart,
+    wishlist,
+    notifications,
+    currency,
+    setCurrency,
+    markNotificationsAsRead
+  } = useStore();
   const { user, role, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
   const isHomePage = location.pathname === '/';
+
+  const SUB_CATEGORIES = {
+    'electronics': ['Smartphones', 'Laptops', 'Audio', 'Cameras', 'Televisions'],
+    'fashion': ['Menswear', 'Womenswear', 'Accessories', 'Footwear', 'Watches'],
+    'home-furniture': ['Living Room', 'Bedroom', 'Kitchen', 'Office', 'Decor'],
+    'beauty': ['Skincare', 'Makeup', 'Fragrance', 'Haircare', 'Bath & Body'],
+  };
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 0);
@@ -62,8 +78,8 @@ export default function Navbar() {
       <div className="max-w-[1440px] mx-auto px-6">
         <div
           className={`relative flex items-center justify-between px-8 rounded-[2rem] transition-all duration-500 border border-white/10 ${isScrolled
-              ? 'bg-black/80 backdrop-blur-xl h-16 shadow-[0_8px_32px_rgba(0,0,0,0.8)]'
-              : 'bg-black/40 backdrop-blur-md h-20 shadow-none'
+            ? 'bg-black/80  h-16 shadow-[0_8px_32px_rgba(0,0,0,0.8)]'
+            : 'bg-black/40  h-20 shadow-none'
             }`}
         >
           {/* Logo */}
@@ -108,21 +124,96 @@ export default function Navbar() {
             </div>
 
             <div className="flex items-center gap-2">
-              <Link to="/profile" className="p-2.5 text-white/60 hover:text-white hover:bg-white/5 rounded-xl transition-all relative">
-                <Heart size={20} />
+              <Link to="/profile" className="p-2.5 text-white/60 hover:text-white hover:bg-white/5 rounded-xl transition-all relative group">
+                <Heart size={20} className="group-hover:text-white" />
                 {wishlist.length > 0 && (
                   <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-white rounded-full border-2 border-black"></span>
                 )}
               </Link>
 
-              <Link to="/cart" className="p-2.5 text-white/60 hover:text-white hover:bg-white/5 rounded-xl transition-all relative">
-                <ShoppingBag size={20} />
+              <Link to="/cart" className="relative p-2.5 rounded-xl hover:bg-white/5 transition-all group">
+                <ShoppingCart size={20} className="text-white/60 group-hover:text-white" />
                 {cart.length > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-[20px] h-5 bg-white text-black text-[10px] font-black flex items-center justify-center rounded-full px-1.5 shadow-lg">
                     {cart.length}
                   </span>
                 )}
               </Link>
+
+              {/* Notifications */}
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    setShowNotifications(!showNotifications);
+                    if (!showNotifications) markNotificationsAsRead();
+                  }}
+                  className="relative p-2.5 rounded-xl hover:bg-white/5 transition-all group"
+                >
+                  <Bell size={20} className="text-white/60 group-hover:text-white" />
+                  {notifications.some(n => n.unread) && (
+                    <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-black"></span>
+                  )}
+                </button>
+
+                <AnimatePresence>
+                  {showNotifications && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute right-0 mt-4 w-80 glass-dark rounded-3xl p-4 shadow-2xl border border-white/10 z-50"
+                    >
+                      <div className="flex items-center justify-between mb-4 px-2">
+                        <h3 className="text-white font-black uppercase text-[10px] tracking-widest">Notifications</h3>
+                        <span className="text-[10px] text-white/20 font-bold uppercase">{notifications.length} Total</span>
+                      </div>
+                      <div className="space-y-2 max-h-[300px] overflow-y-auto no-scrollbar">
+                        {notifications.map(n => (
+                          <div key={n.id} className="p-3 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all cursor-pointer group">
+                            <p className={`text-[11px] leading-relaxed mb-1 ${n.unread ? 'text-white' : 'text-white/40'}`}>{n.text}</p>
+                            <p className="text-[9px] font-bold text-white/20 uppercase tracking-tighter">{n.time}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Currency Selector */}
+              <div className="relative hidden lg:block">
+                <button
+                  onClick={() => setShowCurrencyDropdown(!showCurrencyDropdown)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/10 hover:border-white/20 transition-all"
+                >
+                  <span className="text-white font-black text-[10px] uppercase tracking-widest">{currency.code}</span>
+                  <span className="text-white/40 text-xs">{currency.symbol}</span>
+                </button>
+                <AnimatePresence>
+                  {showCurrencyDropdown && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 5 }}
+                      className="absolute right-0 mt-2 w-24 glass-dark rounded-2xl p-2 border border-white/10 z-50"
+                    >
+                      {['INR', 'USD', 'EUR'].map(c => (
+                        <button
+                          key={c}
+                          onClick={() => {
+                            setCurrency(c);
+                            setShowCurrencyDropdown(false);
+                          }}
+                          className={`w-full text-left px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${currency.code === c ? 'bg-white text-black' : 'text-white/40 hover:text-white'
+                            }`}
+                        >
+                          {c}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
               <div className="h-6 w-px bg-white/10 mx-2"></div>
 
@@ -173,7 +264,11 @@ export default function Navbar() {
                   </AnimatePresence>
                 </div>
               ) : (
-                <Link to="/login" className="btn-premium py-2.5 px-6 text-xs uppercase tracking-widest  font-black ml-2 shadow-[0_4px_20px_rgba(255,255,255,0.1)]">
+                <Link
+                  to="/login"
+                  className={`btn-premium uppercase tracking-widest font-black ml-2 shadow-[0_4px_20px_rgba(255,255,255,0.1)] transition-all duration-500 ${isScrolled ? 'py-1 px-3.5 text-xs rounded-xl' : 'py-1.5 px-4 text-xs rounded-2xl'
+                    }`}
+                >
                   Join Luxe
                 </Link>
               )}
@@ -188,27 +283,63 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Categories Bar (Desktop) - Only on Home Page */}
+        {/* Categories Bar (Desktop) - Only on Home Page with Mega Menu */}
         {isHomePage && !isScrolled && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="mt-4 flex items-center justify-around gap-10 px-10 py-5 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full overflow-x-auto no-scrollbar shadow-[0_10px_40px_rgba(0,0,0,0.3)]"
-          >
-            {CATEGORIES.map((cat) => (
-              <Link
-                key={cat.slug}
-                to={`/category/${cat.slug}`}
-                className="flex items-center gap-3 whitespace-nowrap text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white transition-all group"
-              >
-                <span className="text-lg grayscale group-hover:grayscale-0 transition-all duration-500 scale-90 group-hover:scale-110">
-                  {cat.icon}
-                </span>
-                {cat.name}
-              </Link>
-            ))}
-          </motion.div>
+          <div className="relative mt-4 mb-10">
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center justify-start lg:justify-center gap-10 px-10 py-3 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.3)] overflow-x-auto no-scrollbar scroll-smooth mx-4 lg:mx-auto"
+            >
+              {CATEGORIES.map((cat) => (
+                <div
+                  key={cat.slug}
+                  onMouseEnter={() => setHoveredCategory(cat.slug)}
+                  onMouseLeave={() => setHoveredCategory(null)}
+                  className="relative py-4 group/cat flex-shrink-0"
+                >
+                  <Link
+                    to={`/category/${cat.slug}`}
+                    className={`flex items-center gap-3 whitespace-nowrap text-[10px] font-black uppercase tracking-[0.2em] transition-all group ${hoveredCategory === cat.slug ? 'text-white' : 'text-white/40 hover:text-white'
+                      }`}
+                  >
+                    <span className={`text-lg transition-all duration-500 ${hoveredCategory === cat.slug ? 'grayscale-0 scale-110' : 'grayscale'}`}>
+                      {cat.icon}
+                    </span>
+                    {cat.name}
+                  </Link>
+
+                  <AnimatePresence>
+                    {hoveredCategory === cat.slug && SUB_CATEGORIES[cat.slug] && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="absolute left-1/2 -translate-x-1/2 top-full pt-4 z-50 min-w-[280px]"
+                      >
+                        <div className="p-8 glass-dark border border-white/10 rounded-[2.5rem] shadow-3xl relative overflow-hidden">
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16" />
+                          <h4 className="text-white text-[10px] font-black uppercase tracking-[0.3em] mb-6 whitespace-nowrap">Explore {cat.name}</h4>
+                          <div className="grid grid-cols-1 gap-4">
+                            {SUB_CATEGORIES[cat.slug].map((sub) => (
+                              <Link
+                                key={sub}
+                                to={`/category/${cat.slug}?sub=${sub.toLowerCase()}`}
+                                className="text-white/40 hover:text-white text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-between group/item"
+                              >
+                                {sub}
+                                <span className="opacity-0 -translate-x-2 group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all text-white/40">→</span>
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ))}
+            </motion.div>
+          </div>
         )}
       </div>
 

@@ -44,16 +44,16 @@ export const useStore = create(
 
       // Wishlist
       wishlist: [],
-      toggleWishlist: (product) => {
-        const exists = get().wishlist.find(i => i.id === product.id);
+      toggleWishlist: (productId) => {
+        const exists = get().wishlist.includes(productId);
         if (exists) {
-          set(state => ({ wishlist: state.wishlist.filter(i => i.id !== product.id) }));
+          set(state => ({ wishlist: state.wishlist.filter(id => id !== productId) }));
         } else {
-          set(state => ({ wishlist: [...state.wishlist, product] }));
+          set(state => ({ wishlist: [...state.wishlist, productId] }));
         }
       },
-      isWishlisted: (id) => !!get().wishlist.find(i => i.id === id),
-      removeFromWishlist: (id) => set(state => ({ wishlist: state.wishlist.filter(i => i.id !== id) })),
+      isWishlisted: (id) => get().wishlist.includes(id),
+      removeFromWishlist: (id) => set(state => ({ wishlist: state.wishlist.filter(wid => wid !== id) })),
 
       // Recently Viewed
       recentlyViewed: [],
@@ -61,6 +61,43 @@ export const useStore = create(
         const filtered = get().recentlyViewed.filter(p => p.id !== product.id);
         set({ recentlyViewed: [product, ...filtered].slice(0, 10) });
       },
+
+      // Promo Code
+      promoCode: null,
+      discountPercentage: 0,
+      applyPromoCode: (code) => {
+        const codes = {
+          'LUXE20': 20,
+          'FIRST10': 10,
+          'ELITE50': 50
+        };
+        if (codes[code]) {
+          set({ promoCode: code, discountPercentage: codes[code] });
+          return true;
+        }
+        return false;
+      },
+
+      // Currency
+      currency: { code: 'INR', symbol: '₹', rate: 1 },
+      setCurrency: (currencyCode) => {
+        const currencies = {
+          'INR': { code: 'INR', symbol: '₹', rate: 1 },
+          'USD': { code: 'USD', symbol: '$', rate: 0.012 },
+          'EUR': { code: 'EUR', symbol: '€', rate: 0.011 }
+        };
+        set({ currency: currencies[currencyCode] });
+      },
+
+      // Notifications
+      notifications: [
+        { id: 1, text: "Price dropped on your wishlist item: Samsung S24", time: "2h ago", unread: true },
+        { id: 2, text: "Your order LX-71234 has been delivered", time: "5h ago", unread: false },
+        { id: 3, text: "New Collection: Summer Elite '26 is now live", time: "1d ago", unread: true },
+      ],
+      markNotificationsAsRead: () => set(state => ({
+        notifications: state.notifications.map(n => ({ ...n, unread: false }))
+      })),
 
       // Search
       searchQuery: '',

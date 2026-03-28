@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
 
 export default function ProductCard({ product }) {
-  const { addToCart, toggleWishlist, wishlist } = useStore();
+  const { addToCart, toggleWishlist, wishlist, currency } = useStore();
   const isWishlisted = wishlist.includes(product.id);
 
   const navigate = useNavigate();
@@ -110,10 +110,14 @@ export default function ProductCard({ product }) {
            </div>
 
            <div className="flex items-end justify-between">
-              <div>
-                <p className="text-lg font-black font-outfit text-white">₹{product.price.toLocaleString()}</p>
-                <p className="text-[10px] text-white/20 line-through font-bold">₹{product.mrp.toLocaleString()}</p>
-              </div>
+               <div>
+                 <p className="text-lg font-black font-outfit text-white">
+                   {currency.symbol}{(product.price * currency.rate).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                 </p>
+                 <p className="text-[10px] text-white/20 line-through font-bold">
+                   {currency.symbol}{(product.mrp * currency.rate).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                 </p>
+               </div>
               
               <motion.button 
                 whileHover={{ scale: 1.05 }}

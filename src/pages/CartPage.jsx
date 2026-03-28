@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Trash2, 
@@ -15,14 +16,16 @@ import { useStore } from '../store/useStore';
 import toast from 'react-hot-toast';
 
 export default function CartPage() {
-  const { cart, removeFromCart, updateQuantity } = useStore();
+  const { cart, removeFromCart, updateQuantity, currency, applyPromoCode, promoCode, discountPercentage } = useStore();
+  const [promoInput, setPromoInput] = useState('');
   const navigate = useNavigate();
 
   const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
   const mrpTotal = cart.reduce((acc, item) => acc + (item.mrp * item.quantity), 0);
-  const savings = mrpTotal - subtotal;
+  const discountAmount = promoCode ? (subtotal * (discountPercentage / 100)) : 0;
+  const savings = (mrpTotal - subtotal) + discountAmount;
   const delivery = subtotal > 10000 ? 0 : 500;
-  const total = subtotal + delivery;
+  const total = (subtotal - discountAmount) + delivery;
 
   const handleCheckout = () => {
     if (cart.length === 0) {
@@ -120,8 +123,12 @@ export default function CartPage() {
                       </div>
 
                       <div className="text-right">
-                        <p className="text-2xl font-black font-outfit text-white leading-none mb-1 tracking-tighter">₹{(item.price * item.quantity).toLocaleString()}</p>
-                        <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest">₹{(item.mrp * item.quantity).toLocaleString()} Listing</p>
+                        <p className="text-2xl font-black font-outfit text-white leading-none mb-1 tracking-tighter">
+                          {currency.symbol}{(item.price * item.quantity * currency.rate).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </p>
+                        <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest">
+                          {currency.symbol}{(item.mrp * item.quantity * currency.rate).toLocaleString(undefined, { maximumFractionDigits: 0 })} Listing
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -129,15 +136,30 @@ export default function CartPage() {
               ))}
             </AnimatePresence>
 
-            <div className="p-8 glass-panel rounded-[2.5rem] border-white/5 border-dashed flex items-center justify-between">
-               <div className="flex items-center gap-4">
+            <div className="p-8 glass-panel rounded-[2.5rem] border-white/5 border-dashed flex flex-col sm:flex-row items-center gap-4">
+               <div className="flex items-center gap-4 flex-1">
                   <div className="w-12 h-12 glass-panel rounded-2xl flex items-center justify-center text-white/40">
                     <Tag size={20} />
                   </div>
-                  <p className="text-white text-sm font-bold uppercase tracking-widest">Luxury Promo Code</p>
+                  <input 
+                    type="text" 
+                    placeholder="Enter Luxury Promo Code"
+                    value={promoInput}
+                    onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                    className="bg-transparent border-none text-white text-sm font-bold uppercase tracking-widest focus:outline-none w-full"
+                  />
                </div>
-               <button className="text-white/40 hover:text-white text-[10px] font-black uppercase tracking-[0.3em] transition-all">
-                  Apply Discount
+               <button 
+                 onClick={() => {
+                   if (applyPromoCode(promoInput)) {
+                     toast.success('Promo application successful!');
+                   } else {
+                     toast.error('Invalid or expired code.');
+                   }
+                 }}
+                 className="text-white bg-white/10 px-6 py-3 rounded-xl hover:bg-white hover:text-black text-[10px] font-black uppercase tracking-[0.3em] transition-all"
+               >
+                  {promoCode ? 'Code Applied' : 'Apply'}
                </button>
             </div>
           </div>
@@ -150,25 +172,33 @@ export default function CartPage() {
                   
                   <h3 className="text-white text-xl font-black font-outfit uppercase tracking-widest mb-10">Investment <span className="text-white/20">Summary</span></h3>
 
-                  <div className="space-y-6 mb-10">
+                   <div className="space-y-6 mb-10">
                     <div className="flex justify-between text-xs font-bold uppercase tracking-widest">
                        <span className="text-white/40">Listing Price</span>
-                       <span className="text-white">₹{mrpTotal.toLocaleString()}</span>
+                       <span className="text-white">{currency.symbol}{(mrpTotal * currency.rate).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                     </div>
+                    {promoCode && (
+                       <div className="flex justify-between text-xs font-bold uppercase tracking-widest">
+                          <span className="text-white/40">Promo Discount ({discountPercentage}%)</span>
+                          <span className="text-white">-{currency.symbol}{(discountAmount * currency.rate).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                       </div>
+                    )}
                     <div className="flex justify-between text-xs font-bold uppercase tracking-widest">
                        <span className="text-white/40">Elite Savings</span>
-                       <span className="text-green-400 tracking-tight">- ₹{savings.toLocaleString()}</span>
+                       <span className="text-green-400 tracking-tight">- {currency.symbol}{(savings * currency.rate).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                     </div>
                     <div className="flex justify-between text-xs font-bold uppercase tracking-widest">
                        <span className="text-white/40">White Glove Delivery</span>
-                       <span className="text-white font-black">{delivery === 0 ? 'COMPLIMENTARY' : `₹${delivery}`}</span>
+                       <span className="text-white font-black">{delivery === 0 ? 'COMPLIMENTARY' : `${currency.symbol}${(delivery * currency.rate).toLocaleString()}`}</span>
                     </div>
                   </div>
 
                   <div className="pt-8 border-t border-white/5 mb-10">
                     <div className="flex justify-between items-baseline">
                        <span className="text-white/20 text-xs font-black uppercase tracking-[0.4em]">Total Commitment</span>
-                       <span className="text-4xl font-black font-outfit text-white tracking-tighter">₹{total.toLocaleString()}</span>
+                       <span className="text-4xl font-black font-outfit text-white tracking-tighter">
+                         {currency.symbol}{(total * currency.rate).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                       </span>
                     </div>
                   </div>
 
