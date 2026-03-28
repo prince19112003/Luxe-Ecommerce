@@ -10,13 +10,13 @@ export default function SearchResultsPage() {
   const results = searchProducts(query);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-6 py-12">
+    <div className="bg-luxe-black min-h-screen max-w-7xl mx-auto px-4 md:px-6 pt-32 pb-12">
       <div className="mb-8">
-        <h1 className="text-2xl font-black font-outfit text-gray-900 mb-2 flex items-center gap-2">
+        <h1 className="text-2xl font-black font-outfit text-white mb-2 flex items-center gap-2">
           <Search size={24} className="text-luxe-red" /> 
           Search Results for "{query}"
         </h1>
-        <p className="text-gray-500">{results.length} products found matching your search</p>
+        <p className="text-white/40">{results.length} products found matching your search</p>
       </div>
 
       {results.length > 0 ? (
@@ -33,20 +33,20 @@ export default function SearchResultsPage() {
           ))}
         </div>
       ) : (
-        <div className="text-center py-24 bg-white rounded-[2.5rem] border border-dashed border-gray-200">
-          <div className="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
-            <ShoppingBag size={48} className="text-luxe-red opacity-20" />
+        <div className="text-center py-24 bg-white/5 rounded-[2.5rem] border border-dashed border-white/10">
+          <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
+            <ShoppingBag size={48} className="text-white/20" />
           </div>
-          <h2 className="text-2xl font-black font-outfit text-gray-900 mb-4">No results found</h2>
-          <p className="text-gray-500 max-w-sm mx-auto mb-8">
+          <h2 className="text-2xl font-black font-outfit text-white mb-4">No results found</h2>
+          <p className="text-white/40 max-w-sm mx-auto mb-8">
             We couldn't find any products matching your search. Try different keywords or browse our categories.
           </p>
           <div className="flex justify-center gap-4">
             <Link to="/">
-              <button className="btn-luxe px-8 py-3 rounded-2xl font-bold text-sm">Return Home</button>
+              <button className="btn-premium px-8 py-3 text-xs font-black uppercase tracking-widest">Return Home</button>
             </Link>
             <Link to="/category/electronics">
-              <button className="btn-outline-luxe px-8 py-3 rounded-2xl font-bold text-sm">Browse Shop</button>
+              <button className="btn-premium px-8 py-3 text-xs font-black uppercase tracking-widest bg-transparent text-white border-white/20 hover:bg-white/10">Browse Shop</button>
             </Link>
           </div>
         </div>

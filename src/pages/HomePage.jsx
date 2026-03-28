@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, Navigation, EffectFade } from 'swiper/modules';
@@ -55,7 +56,7 @@ export default function HomePage() {
   const flashDeals = products.slice(10, 18);
 
   return (
-    <div className="bg-luxe-black overflow-hidden pt-20">
+    <div className="bg-luxe-black overflow-hidden pt-44">
       {/* Hero Section */}
       <section className="relative h-[90vh] mx-6 mt-6 rounded-[3rem] overflow-hidden group">
         <Swiper
@@ -93,9 +94,11 @@ export default function HomePage() {
                       {slide.desc}
                     </p>
                     <div className="flex items-center gap-6">
-                      <button className="btn-premium px-10 py-5 text-sm uppercase tracking-widest font-black flex items-center gap-3">
-                        {slide.cta} <ArrowRight size={18} />
-                      </button>
+                      <Link to="/category/all">
+                        <button className="btn-premium px-10 py-5 text-sm uppercase tracking-widest font-black flex items-center gap-3">
+                          {slide.cta} <ArrowRight size={18} />
+                        </button>
+                      </Link>
                       <button className="group/btn flex items-center gap-4 text-white/60 hover:text-white transition-all font-bold">
                         Learn More <span className="w-12 h-px bg-white/20 group-hover/btn:w-16 transition-all" />
                       </button>
@@ -125,30 +128,31 @@ export default function HomePage() {
             <h2 className="text-white text-4xl md:text-6xl font-black font-outfit uppercase tracking-tighter mb-4">Exclusive <span className="text-white/20">Departments</span></h2>
             <p className="text-white/40 text-lg font-medium">Curation of finest products across premium categories.</p>
           </div>
-          <button className="group flex items-center gap-3 text-white/60 hover:text-white transition-all font-black uppercase tracking-widest text-xs">
+          <Link to="/category/all" className="group flex items-center gap-3 text-white/60 hover:text-white transition-all font-black uppercase tracking-widest text-xs">
             View All Categories <ChevronRight size={16} className="group-hover:translate-x-2 transition-transform" />
-          </button>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {CATEGORIES.map((cat, i) => (
-            <motion.div 
-              key={i}
-              whileHover={{ y: -10 }}
-              className="relative aspect-[3/4] rounded-[2.5rem] overflow-hidden group cursor-pointer border border-white/5"
-            >
-              <img src={cat.img} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={cat.name} />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80" />
-              
-              <div className="absolute bottom-0 left-0 right-0 p-8 pb-10">
-                <p className="text-white/40 text-xs font-black uppercase tracking-[0.3em] mb-2">{cat.count}</p>
-                <h3 className="text-white text-3xl font-black font-outfit uppercase tracking-tight">{cat.name}</h3>
-                <div className="mt-6 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-y-4 group-hover:translate-y-0">
-                  <span className="w-8 h-px bg-white/40" />
-                  <span className="text-white text-[10px] font-black uppercase tracking-widest">Shop Now</span>
+            <Link key={i} to={`/category/${cat.name.toLowerCase()}`}>
+              <motion.div 
+                whileHover={{ y: -10 }}
+                className="relative aspect-[3/4] rounded-[2.5rem] overflow-hidden group cursor-pointer border border-white/5"
+              >
+                <img src={cat.img} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={cat.name} />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80" />
+                
+                <div className="absolute bottom-0 left-0 right-0 p-8 pb-10">
+                  <p className="text-white/40 text-xs font-black uppercase tracking-[0.3em] mb-2">{cat.count}</p>
+                  <h3 className="text-white text-3xl font-black font-outfit uppercase tracking-tight">{cat.name}</h3>
+                  <div className="mt-6 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-y-4 group-hover:translate-y-0">
+                    <span className="w-8 h-px bg-white/40" />
+                    <span className="text-white text-[10px] font-black uppercase tracking-widest">Shop Now</span>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>
+            </Link>
           ))}
         </div>
       </section>
@@ -201,10 +205,12 @@ export default function HomePage() {
              <p className="text-white/40 text-lg md:text-xl font-medium max-w-2xl mb-12">
                Join our exclusive elite membership for early access to drops, private styling, and worldwide white-glove delivery.
              </p>
-             <button className="btn-premium px-12 py-6 text-sm uppercase tracking-[0.3em] font-black group">
-                Become An Insider 
-                <span className="inline-block group-hover:translate-x-2 transition-transform ml-4">→</span>
-             </button>
+             <Link to="/login">
+               <button className="btn-premium px-12 py-6 text-sm uppercase tracking-[0.3em] font-black group">
+                  Become An Insider 
+                  <span className="inline-block group-hover:translate-x-2 transition-transform ml-4">→</span>
+               </button>
+             </Link>
           </div>
         </div>
       </section>

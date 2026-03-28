@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Search, 
-  ShoppingCart, 
-  Heart, 
-  User, 
-  Menu, 
-  X, 
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import {
+  Search,
+  ShoppingCart,
+  Heart,
+  User,
+  Menu,
+  X,
   ChevronDown,
   LogOut,
   ShoppingBag,
@@ -33,10 +33,13 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-  
+
   const { cart, wishlist } = useStore();
   const { user, role, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isHomePage = location.pathname === '/';
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 0);
@@ -52,22 +55,20 @@ export default function Navbar() {
   };
 
   return (
-    <nav 
-      className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${
-        isScrolled ? 'py-3' : 'py-5'
-      }`}
+    <nav
+      className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${isScrolled ? 'py-3' : 'py-5'
+        }`}
     >
       <div className="max-w-[1440px] mx-auto px-6">
-        <div 
-          className={`relative flex items-center justify-between px-8 rounded-[2rem] transition-all duration-500 overflow-hidden ${
-            isScrolled 
-            ? 'glass-dark h-16 shadow-[0_8px_32px_rgba(0,0,0,0.4)]' 
-            : 'bg-black/40 backdrop-blur-md h-20 border border-white/5'
-          }`}
+        <div
+          className={`relative flex items-center justify-between px-8 rounded-[2rem] transition-all duration-500 border border-white/10 ${isScrolled
+              ? 'bg-black/80 backdrop-blur-xl h-16 shadow-[0_8px_32px_rgba(0,0,0,0.8)]'
+              : 'bg-black/40 backdrop-blur-md h-20 shadow-none'
+            }`}
         >
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group relative z-10">
-            <motion.div 
+            <motion.div
               whileHover={{ rotate: 180 }}
               className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-black font-black text-xl shadow-[0_0_20px_rgba(255,255,255,0.2)]"
             >
@@ -79,14 +80,14 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Search */}
-          <form 
+          <form
             onSubmit={handleSearch}
             className="hidden md:flex flex-1 max-w-xl mx-12 relative z-10"
           >
             <div className="relative w-full group">
-              <input 
-                type="text" 
-                placeholder="Search luxury products, brands and more..." 
+              <input
+                type="text"
+                placeholder="Search luxury products, brands and more..."
                 className="w-full bg-white/5 border border-white/10 text-white placeholder:text-white/30 pl-12 pr-4 py-3 rounded-2xl focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all text-sm"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -113,7 +114,7 @@ export default function Navbar() {
                   <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-white rounded-full border-2 border-black"></span>
                 )}
               </Link>
-              
+
               <Link to="/cart" className="p-2.5 text-white/60 hover:text-white hover:bg-white/5 rounded-xl transition-all relative">
                 <ShoppingBag size={20} />
                 {cart.length > 0 && (
@@ -127,7 +128,7 @@ export default function Navbar() {
 
               {user ? (
                 <div className="relative">
-                  <button 
+                  <button
                     onClick={() => setShowUserDropdown(!showUserDropdown)}
                     className="flex items-center gap-3 pl-2 py-1.5 rounded-xl hover:bg-white/5 transition-all text-left"
                   >
@@ -160,7 +161,7 @@ export default function Navbar() {
                           <Link to="/profile" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all text-sm font-bold">
                             <ShoppingBag size={16} /> My Orders
                           </Link>
-                          <button 
+                          <button
                             onClick={() => { logout(); setShowUserDropdown(false); }}
                             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-400 hover:bg-red-400/10 transition-all text-sm font-bold mt-2"
                           >
@@ -172,12 +173,12 @@ export default function Navbar() {
                   </AnimatePresence>
                 </div>
               ) : (
-                <Link to="/login" className="btn-premium py-2.5 px-6 text-xs uppercase tracking-widest font-black ml-2 shadow-[0_4px_20px_rgba(255,255,255,0.1)]">
+                <Link to="/login" className="btn-premium py-2.5 px-6 text-xs uppercase tracking-widest  font-black ml-2 shadow-[0_4px_20px_rgba(255,255,255,0.1)]">
                   Join Luxe
                 </Link>
               )}
 
-              <button 
+              <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="md:hidden p-2 text-white/60 hover:text-white transition-all ml-2"
               >
@@ -187,20 +188,21 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Categories Bar (Desktop) */}
-        {!isScrolled && (
-          <motion.div 
-            initial={{ opacity: 0, y: -10 }}
+        {/* Categories Bar (Desktop) - Only on Home Page */}
+        {isHomePage && !isScrolled && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-6 flex items-center justify-center gap-10 px-8 py-4 glass-panel rounded-full overflow-x-auto no-scrollbar"
+            exit={{ opacity: 0, y: -20 }}
+            className="mt-4 flex items-center justify-around gap-10 px-10 py-5 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full overflow-x-auto no-scrollbar shadow-[0_10px_40px_rgba(0,0,0,0.3)]"
           >
             {CATEGORIES.map((cat) => (
-              <Link 
-                key={cat.slug} 
+              <Link
+                key={cat.slug}
                 to={`/category/${cat.slug}`}
-                className="flex items-center gap-2 whitespace-nowrap text-[11px] font-black uppercase tracking-[0.15em] text-white/40 hover:text-white transition-all group"
+                className="flex items-center gap-3 whitespace-nowrap text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white transition-all group"
               >
-                <span className="text-base grayscale group-hover:grayscale-0 transition-all duration-500 scale-90 group-hover:scale-110">
+                <span className="text-lg grayscale group-hover:grayscale-0 transition-all duration-500 scale-90 group-hover:scale-110">
                   {cat.icon}
                 </span>
                 {cat.name}
@@ -221,9 +223,9 @@ export default function Navbar() {
           >
             <div className="p-6 space-y-6">
               <form onSubmit={handleSearch} className="relative">
-                <input 
-                  type="text" 
-                  placeholder="Search..." 
+                <input
+                  type="text"
+                  placeholder="Search..."
                   className="w-full bg-white/5 border border-white/10 text-white pl-10 pr-4 py-3 rounded-2xl focus:outline-none focus:border-white/30"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -232,8 +234,8 @@ export default function Navbar() {
               </form>
               <div className="grid grid-cols-2 gap-4">
                 {CATEGORIES.map((cat) => (
-                  <Link 
-                    key={cat.slug} 
+                  <Link
+                    key={cat.slug}
                     to={`/category/${cat.slug}`}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex items-center gap-3 p-3 bg-white/5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-white active:bg-white/10 transition-all border border-white/5"
